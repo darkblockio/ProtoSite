@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Sell sell sell</title>
+    
+<style>
+div.gallery {
+  margin: 5px;
+  border: 1px solid #ccc;
+  float: left;
+  width: 180px;
+}
+
+div.gallery:hover {
+  border: 1px solid #777;
+}
+
+div.gallery img {
+  width: 100%;
+  height: auto;
+}
+
+div.desc {
+  padding: 15px;
+  text-align: center;
+}
+</style>
+    
+    <script src="https://unpkg.com/arweave/bundles/web.bundle.js"></script>
+    <script src="assets/aes.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+	<script src="https://arweave.net/Yine-73v8RggAR3TXNsG_Y60MbcQBbfLIEcsRfDC6Hs"></script>
+	
+
+    <script>
+	const arweave = Arweave.init(
+		{
+			host: 'arweave.net'
+		}
+	);
+	var address;
+	var encrypted;
+	var wallet;
+	var aesKey;
+	var artid;
+	var thumbDataBlob;
+	var thumbTx;
+	var metaTx;
+	var assets = [];
+	var lastOwner = {};
+	var contracts = {};
+	arweave.network.getInfo().then(console.log);
+	
+    let smartweave = require('smartweave');
+
+	</script>
+	
+</head>
+
+
+
+<body>
+	<form>Select wallet file: <input type="file" id="keyfile"> <a onclick="doit()"><br>submit</a></form>
+
+<script>
+async function assetQuery(query){
+//curl 'https://arweave.net/graphql' -H 'Accept-Encoding: gzip, deflate, br' -H 'Content-Type: application/json' -H 'Accept: application/json' 
+//-H 'Connection: keep-alive' -H 'DNT: 1' -H 'Origin: https://arweave.net' --data-binary '{"query":"query {  transactions(    tags: { name: \"Uploading-App\", values: [\"Darkblock\"] }  ) {    edges {      node {        id tags { name value }      }    }  }}"}' --compressed
+		var request = new XMLHttpRequest();
+		request.open( 'GET', 'https://arweave.net/graphql?query='  +encodeURIComponent(query), false );
+		//request.setRequestHeader('Accept-Encoding', 'gzip, deflate, br');
+		request.setRequestHeader('Content-Type', 'application/json');
+		request.setRequestHeader('Accept', 'application/json');
+		//request.setRequestHeader('DNT', '1');
+		//request.setRequestHeader('Origin', 'https://arweave.net');
+		request.send();
+		//console.log(request.responseText);
+		var resp = await JSON.parse( request.responseText );
+		//resp.data.transactions.edges.forEach(edge => document.write(edge.node.id + "<br>"));
+
+		resp.data.transactions.edges.forEach(function(edge){ 
+			var thumbId;
+			var title;
+			contracts[edge.node.id] = edge.node.id;
+			console.log( edge.node.tags );
+			edge.node.tags.forEach(function(t){
+				if( t.name === 'thumbnail' ){
+					edge.node.thumbId = t.value;
+				}
+				if( t.name === 'Title' ){
+					edge.node.title = t.value;
+				}
+				if( t.name === 'Init-State' ){
+					console.log( edge.node.id + " : " + t.value );
+					edge.node['originalOwner'] = t.value.split('"')[3];//terribl. can't get the json to parse for some reason'
+				}
+			});
+			assets.push( edge.node );
+
+		});
+		console.log( contracts );
+
+		var contractString = '"' + Object.values(contracts).join('","') + '"'
+		//console.log( contractString );
+		await stateQuery('query {  transactions(first: 500,    tags: { name: "Contract", values: [' + contractString + '] }  ) {    edges {      node {        id tags { name value }      }    }  }}');
+}
+var gstring = '<center><div class="gallery"><a target="_blank" href="IMG"><img src="IMG" alt="TITLE" width="600" height="400"></a><div class="desc">TITLE</div></div><br><br></center>';
+async function stateQuery(query){
+		console.log( query );
+//curl 'https://arweave.net/graphql' -H 'Accept-Encoding: gzip, deflate, br' -H 'Content-Type: application/json' -H 'Accept: application/json' 
+//-H 'Connection: keep-alive' -H 'DNT: 1' -H 'Origin: https://arweave.net' --data-binary '{"query":"query {  transactions(    tags: { name: \"Uploading-App\", values: [\"Darkblock\"] }  ) {    edges {      node {        id tags { name value }      }    }  }}"}' --compressed
+		var request = new XMLHttpRequest();
+		request.open( 'GET', 'https://arweave.net/graphql?query='  +encodeURIComponent(query), false );
+		//request.setRequestHeader('Accept-Encoding', 'gzip, deflate, br');
+		request.setRequestHeader('Content-Type', 'application/json');
+		request.setRequestHeader('Accept', 'application/json');
+		//request.setRequestHeader('DNT', '1');
+		//request.setRequestHeader('Origin', 'https://arweave.net');
+		request.send();
+		//console.log(request.responseText);
+		var resp = await JSON.parse( request.responseText );
+		//resp.data.transactions.edges.forEach(edge => document.write(edge.node.id + "<br>"));
+		resp.data.transactions.edges.forEach(function(edge){ 
+			var owner;
+			var assetId;
+			console.log( edge.node.tags );
+			edge.node.tags.forEach(function(t){
+				if( t.name === 'Input' ){
+					owner = JSON.parse( t.value ).target;
+				}
+				if( t.name === 'Contract' ){
+					assetId = t.value;
+				}
+			});
+			if( !lastOwner[assetId] ){
+				lastOwner[assetId] = owner;
+			}
+		});
+		console.log( lastOwner );
+		
+		assets.forEach(function(asset){
+			asset.owner = lastOwner[asset.id] ? lastOwner[asset.id] : asset.originalOwner;
+			if( asset.owner === address ){
+				//document.write( asset.id );
+				var g = gstring.replace(/IMG/g,"https://arweave.net/" + asset.thumbId ).replace(/TITLE/g,asset.title);
+				document.write( g );
+			}
+		});
+		
+		
+}
+</script>
+
+
+	<script>
+
+		// In this example we have an input file with the ID "keyfile"
+		
+		document.getElementById('keyfile').onchange = (ev) => {
+	        const fileReader = new FileReader();
+	        fileReader.onload = async (e) => {
+		                        wallet = JSON.parse(e.target.result);
+					address = await arweave.wallets.jwkToAddress(wallet);
+		                     }
+		          fileReader.readAsText(ev.target.files[0]);
+		}
+	</script>
+	<script>
+	async function doit(){
+
+		arweave.wallets.getBalance(address).then((balance) => {
+			    let winston = balance;
+			    let ar = arweave.ar.winstonToAr(balance);
+
+			    console.log(winston);
+			    console.log(ar);
+			    
+			    document.write( 'You are logged in with walletId ' + address + '<br><br>' );
+			    
+			    //document.write( 'You are logged in with walletId ' + address + ' with ' + ar + ' ar!<br><br>' );
+				//document.write( '<form>now transfer something<br><br>' + 
+					//'darkblock tx id:<input id=arttx name=arttx size=50><br>' + 
+					//'destination wallet:<input id=destination name=destination size=50><br><br>' + 
+				 	//'<a onclick="transfer()">transfer!</a></form>' );
+				 	
+				//document.write('<br><br>');
+				//document.write('<div id=done></div>');
+				
+				
+				assetQuery('query {  transactions(first: 500,    tags: { name: \"Uploading-App\", values: [\"Darkblock\"] }  ) {    edges {      node {        id tags { name value }      }    }  }}');
+				
+
+		});
+
+	}
+</script>
+
+<script>
+//async function interactWrite(arweave: Arweave, wallet: JWKInterface, contractId: string, input: any, tags: { name: string; value: string }[] = [], target: string = '', winstonQty: string = ''): Promise<string>
+async function transfer(){
+    var target = document.getElementById( 'destination' ).value;
+    var txId = document.getElementById( 'arttx' ).value;
+    console.log('target: ' + target);
+	var input = { function: 'transfer', target: target };
+	var tags = {};
+	var ret = await smartweave.interactWrite( arweave, wallet, txId, input, tags, target, '100' );
+	console.log( ret );
+	document.getElementById('done').innerHTML = ret;
+} 
+</script>
+
+</body>
+</html>

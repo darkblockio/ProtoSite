@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>upload file!</title>
+    <script src="https://unpkg.com/arweave/bundles/web.bundle.js"></script>
+   
+</head>
+<body>
+
+<div onclick=test()>go for it</div>
+	
+    <script>
+	const arweave = Arweave.init(
+		{
+			host: 'arweave.net'
+		}
+	);
+
+	async function test(){
+		try{
+			//address = await window.arweaveWallet.getActiveAddress();
+		}
+		catch(err){
+			//can get perms instead
+			await window.arweaveWallet.connect([ 'ACCESS_ADDRESS', 'SIGN_TRANSACTION' ]);//this throws an error if we are already logged in :(
+			//address = await window.arweaveWallet.getActiveAddress();
+		}
+		//window.alert("you are logged in with address: " + address);
+		makeForm();
+	    //window.alert( "loaded wallet: " + address );
+	}
+	
+ </script>
+<script>
+	async function makeForm(){
+		document.write( 'uploading meta' );
+
+		await uploadMeta();
+	}
+</script>
+
+
+	
+<script>
+
+
+async function uploadMeta(){
+	
+
+	let transaction = await arweave.createTransaction({
+	    data: "" + Math.random()
+	});
+
+	console.log("signing meta tx");	
+	await arweave.transactions.sign(transaction);
+	console.log("after tx sign");
+	console.log("meta: " + transaction);
+
+
+	await arweave.transactions.post(transaction);
+
+}
+
+
+</script>
+
+
+
+
+</body>
+</html>

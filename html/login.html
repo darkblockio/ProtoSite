@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head id="head">
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="css/main.css" />
+    <link rel="stylesheet" href="https://use.typekit.net/yds2uea.css" />
+    <title>darkblock</title>
+    <script src="https://unpkg.com/arweave/bundles/web.bundle.js"></script>
+    <script
+      src="https://code.jquery.com/jquery-3.6.0.min.js"
+      integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4="
+      crossorigin="anonymous"
+    ></script>
+    <!-- <script
+      src="https://code.jquery.com/jquery-3.6.0.min.js"
+      integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4="
+      crossorigin="anonymous"
+    ></script> -->
+    <script>
+      const arweave = Arweave.init({
+        host: "arweave.net",
+      });
+      var address;
+      arweave.network.getInfo().then(console.log);
+    </script>
+  </head>
+
+  <body style="margin: 0px" id="main">
+    <nav>
+      <div>
+        <a href="index.html"
+          ><img width="100%" src="./images/logo.svg" alt=""
+        /></a>
+      </div>
+      <div class="nav-push">
+        <a class="nav-link" onclick="doit()">Connect Device</a>
+      </div>
+    </nav>
+    <main class="container wallet-link">
+      <h1 class="login-title">
+        Log in to <br />
+        Darkblock
+      </h1>
+      <p style="margin-bottom: 24px;" class="login-subheader">Select the wallet file for your NFT</p>
+      <!-- <form class="login-form">
+      Select wallet file: <input type="file" id="keyfile" />
+      <a class="submit-wallet">submit</a>
+    </form> -->
+      <div class="login-container">
+        <div class="box">
+          <div class="file-drop-area">
+            <img
+              style="margin-bottom: 50px"
+              src="./images/icon-document.svg"
+              alt=""
+            />
+            <span class="fake-btn">Choose files</span>
+            <span style="font-size: 18px; margin-bottom: 50px"
+              >Click or drop your files here</span
+            >
+            <span style="color: rgba(255, 255, 255, 0.5)" class="file-msg"
+              >No file chosen</span
+            >
+            <input class="file-input" id="keyfile" type="file" />
+          </div>
+        </div>
+      </div>
+      <div style="padding-top: 50px">
+        <a class="submit-wallet" onclick="doit()">Submit</a>
+      </div>
+    </main>
+    <script>
+      var $fileInput = $(".file-input");
+      var $droparea = $(".file-drop-area");
+
+      // highlight drag area
+      $fileInput.on("dragenter focus click", function () {
+        $droparea.addClass("is-active");
+      });
+
+      // back to normal state
+      $fileInput.on("dragleave blur drop", function () {
+        $droparea.removeClass("is-active");
+      });
+
+      // change inner text
+      $fileInput.on("change", function () {
+        var filesCount = $(this)[0].files.length;
+        var $textContainer = $(this).prev();
+
+        if (filesCount === 1) {
+          // if single file is selected, show file name
+          var fileName = $(this).val().split("\\").pop();
+          $textContainer.text(fileName);
+        } else {
+          // otherwise show number of files
+          $textContainer.text(filesCount + " files selected");
+        }
+      });
+    </script>
+    <script>
+      function doit() {
+        arweave.wallets.getBalance(address).then((balance) => {
+          let winston = balance;
+          let ar = arweave.ar.winstonToAr(balance);
+
+          console.log(winston);
+          //125213858712
+          
+          console.log(ar);
+          //0.125213858712
+          var html =
+            "<div style=font-family:itc-avant-garde-gothic-pro,sans-serif;background-color:#020635;color:white;>";
+          html =
+            html +
+            '<div style=height:100vh;display:flex;justify-content:center;flex-direction:column;width:85vw;margin:auto;align-items:center; class="wallet-link">';
+          html = html + '<form style=display:flex;flex-direction:column;width:25vw;justify-content:center;align-items:center; class="login-form">';
+          html =
+            html +
+            "<h1 style=font-family:itc-avant-garde-gothic-pro,sans-serif;font-weight:700;text-align:center;font-size:48px;margin-bottom:40px; class=upload-subheader>Log in to <br> Darkblock </h1>";
+            html =
+            html +
+            "<p style=font-family:itc-avant-garde-gothic-pro,sans-serif;font-weight:700;text-align:center;font-size:16px;color:#00febb;margin-bottom:40px;margin-top:0; class=upload-subheader>Enter the PIN code on your TV screen </p>";
+          html =
+            html +
+            '<input autocomplete="off" class="pin-input" placeholder="Enter your PIN here" style=outline:none;text-align:center;background:none;border:none;width:100%;border-bottom:3px;border-bottom-style:solid;border-bottom-color:#00febb;padding-bottom:12px;color:white; size=10 id="code"><a style=width:100%;text-align:center;border-radius:2px;background-color:#00febb;cursor:pointer;color:black;margin-top:40px;font-weight:700;text-align:center;width:50px;display:flex;align-items:center;justify-content:center;border-radius:2px;width:100%;text-align:center;padding-top:12px;padding-bottom:12px; class="submit submit-wallet"  onclick="pushCode(); ">Login</a>';
+          html = html + "</form></div></div>";
+          document.getElementById("head").innerHTML = "";
+          document.getElementById("main").innerHTML = html;
+        });
+      }
+    </script>
+
+    <script>
+      // In this example we have an input file with the ID "keyfile"
+      let wallet;
+      document.getElementById("keyfile").onchange = (ev) => {
+        const fileReader = new FileReader();
+        fileReader.onload = async (e) => {
+          wallet = JSON.parse(e.target.result);
+          address = await arweave.wallets.jwkToAddress(wallet);
+        };
+        fileReader.readAsText(ev.target.files[0]);
+      };
+    </script>
+    <script>
+      var head = document.getElementsByTagName("HEAD")[0];
+
+      // Create new link Element
+      var link = document.createElement("link");
+
+      // set the attributes for link element
+      link.rel = "stylesheet";
+
+      link.type = "text/css";
+
+      link.href = "./css/main.css";
+
+      // Append link element to HTML head
+      head.appendChild(link);
+
+      // Append link element to HTML head
+      head.appendChild(link);
+
+      function pushCode() {
+        console.log("hello");
+        // define the $ as jQuery for multiple uses
+        jQuery(function ($) {
+          // ...
+          let code = document.getElementById("code").value;
+          code = code.toUpperCase();
+          code = code.replace(/\W/g, "");
+          $.get(
+            "https://dev1.darkblock.io/api/codeset/" + code + "/" + address,
+            function () {
+              window.location.href = "portal.html";
+            }
+          );
+        });
+      }
+    </script>
+
+    <script src="./js/scripts.js"></script>
+  </body>
+</html>

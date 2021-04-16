@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>upload file!</title>
+    <script src="https://unpkg.com/arweave/bundles/web.bundle.js"></script>
+    <script src="assets/aes.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+    <script src="https://wzrd.in/standalone/smartweave@latest"></script>
+
+</head>
+<body>
+	<!--<form>Select wallet file: <input type="file" id="keyfile"> <a onclick="doit()"><br>submit</a></form>-->
+	<div onclick=getWallet()>Login with Arconnect</a>
+<script>
+	const arweave = Arweave.init(
+		{
+			host: 'arweave.net'
+		}
+	);
+	
+	var address;
+	var encrypted;
+	var wallet;
+	var aesKey;
+	var artid;
+	var thumbDataBlob;
+	var thumbTx;
+	var metaTx;
+	var smartTx;
+	arweave.network.getInfo().then(console.log);
+	
+	async function getWallet(){
+		try{
+			address = await window.arweaveWallet.getActiveAddress();
+		}
+		catch(err){
+			await window.arweaveWallet.connect([ 'ACCESS_ADDRESS', 'SIGN_TRANSACTION' ]);//this throws an error if we are already logged in :(
+			address = await window.arweaveWallet.getActiveAddress();
+		}
+		window.alert("you are logged in!");
+		makeForm();
+	    //window.alert( "loaded wallet: " + address );
+	}
+	
+	//let smartweave = require('smartweave');
+
+</script>
+<script>
+	function makeForm(){
+		getTheKey();
+		document.write( "<br>Name<br><input size=30 id=name value=\"The Title of the Art\"><br><br>" );
+		document.write( "Description<br><textarea rows=4 cols=40 id=description>This is a description that is very good.</textarea><br><br>" );
+		document.write( "Creator royalties<br><select name=royalty id=royalty><br><br>" );
+		document.write( "<option value=\"0\">No Royalty</option>");
+		document.write( "<option value=\"5\">5%</option>");
+		document.write( "<option value=\"10\">10%</option>");
+		document.write( "<option value=\"15\">15%</option>");
+		document.write( "<option value=\"20\">20%</option>");
+		document.write( "</select>" );
+		document.write( "<br><br>Artist<br><input size=30 id=artist value=\"Some Artist\"><br><br>" );
+		document.write( "Date Created:<input type=\"date\" id=\"created\" name=\"created\" value=\"2020-06-01\"><br><br>")
+		document.write( '<form>Select art to upload: <input type="file" id="artfile"> <a id="encrypt" onclick="encryptit()"><br>encrypt!</a></form>' );
+		document.write('<br><br>');
+		document.write('<div id=done></div>');
+	}
+</script>
+
+
+<script>	
+	function sleep(ms) {
+	  return new Promise(resolve => setTimeout(resolve, ms));
+	}
+</script>
+<script>		
+	
+	async function getTheKey(){
+		var request = new XMLHttpRequest();
+		request.open( 'GET', '/api/triggergeneration/' + address, false );
+		request.send(null);
+		
+		console.log('1: ' + request.responseText);
+		var x = 0;
+		for( ;; ){
+			var request2 = new XMLHttpRequest();
+			var url = '/api/getartkey/' + address;
+			console.log(url);
+			request2.open( 'GET', url, false );
+			request2.send(null);
+			console.log('resp: (' + request2.responseText + ')');
+			if( request2.responseText.indexOf( 'key' ) > 0 && request2.responseText.indexOf( 'null' ) == -1 ){
+				console.log('2: ' +request2.responseText);
+				const obj = JSON.parse( request2.responseText );
+				aesKey = obj.key;
+				artid = obj.artid;
+				break;
+			}
+			await sleep(1000);
+			x=x+1;
+			console.log( 'try ' + x );
+		}		
+
+		//document.write( '<form>now encrypt a file: <input type="file" id="artfile"> <a id="encrypt" onclick="getThumbnail()"><br>getThumbnail!</a></form>' );
+		
+		
+	}
+
+
+</script>
+	
+<script>
+
+
+async function uploadMeta(){
+	
+	console.log('uploading metadata');
+	var meta = {"name": document.getElementById('name').value, "description": document.getElementById('description').value, "artist": document.getElementById('artist').value, "created": document.getElementById('created').value, "royalty": document.getElementById('royalty').value};
+	console.log( meta );
+	let transaction = await arweave.createTransaction({
+	    data: JSON.stringify(meta)
+	});
+	transaction.addTag('artid', artid);
+	transaction.addTag('asset-type', 'metdata');
+	transaction.addTag('Content-Type', 'application/json');
+
+	console.log("signing meta tx");	
+	transaction = await arweave.transactions.sign(transaction);
+	
+	console.log("meta: " + transaction);
+
+	let uploader = await arweave.transactions.getUploader(transaction);
+
+	while (!uploader.isComplete) {
+	  await uploader.uploadChunk();
+	  console.log(`${uploader.pctComplete}% complete, ${uploader.uploadedChunks}/${uploader.totalChunks}`);
+	}
+	console.log('metadata upload complete');
+	metaTx = transaction.id;
+}
+
+async function upload(){
+	
+	let transaction = await arweave.createTransaction({
+	    data: encrypted+''
+	});
+
+	//Verto NFT tags	
+	transaction.addTag('Exchange', 'VertoTest');
+	transaction.addTag('Action', 'marketplace/Create');
+	transaction.addTag('Content-Type', 'Encrypted');
+	
+	//Darkblock tags
+	transaction.addTag('asset-type', 'encrypted_original');
+	transaction.addTag('thumbnail', thumbTx );
+	transaction.addTag('metadata', metaTx );
+	transaction.addTag('artid', artid);
+	transaction.addTag('Uploading-App', "Darkblock" );
+	transaction.addTag('Creator', "The Creator" );
+	transaction.addTag('Title', "Title of the Art" );
+	
+	//smart contract tags
+	transaction.addTag('App-Version', '0.3.0');
+	transaction.addTag('App-Name', 'SmartWeaveContract' );
+	transaction.addTag('Contract-Src', '19KJrsgGk61wOrThQSwrVjsVhdXRIyFOogPGKMJ5YAo');
+	//need to sanitize this input, use JSON.stringify or whatevs
+	transaction.addTag('Init-State', '{"owner":"' + address + '","name":"' + document.getElementById('name').value + '","ticker":"DBK-Test","description":"' + document.getElementById('description').value + '", balance: {"' + address + '": 1}}');
+
+	console.log( "signing darkblock transaction" );
+	await arweave.transactions.sign(transaction);
+	
+	console.log("darkblock: " + transaction);
+
+	console.log( "about to upload darkblock" );
+	let uploader = await arweave.transactions.getUploader(transaction);
+
+	while (!uploader.isComplete) {
+	  await uploader.uploadChunk();
+	  console.log(`${uploader.pctComplete}% complete, ${uploader.uploadedChunks}/${uploader.totalChunks}`);
+	}
+	console.log('upload complete');
+	document.getElementById('done').innerHTML = 'upload complete!\n<br> darkblock: <a href="https://arweave.net/' + transaction.id + '">' + transaction.id + '</a> - <a href="https://viewblock.io/arweave/tx/' + transaction.id + '">view tx</a>\n<br>' + 
+			'thumb: <a href="https://arweave.net/' + thumbTx + '">' + thumbTx + '</a>\n<br>' +
+			'meta: <a href="https://arweave.net/' + metaTx + '">' + metaTx + '</a>\n<br>';
+
+}
+
+
+async function uploadThumb(){
+	
+	//console.log('upload thumb: ' + thumbDataBlob);
+	let transaction = await arweave.createTransaction({
+	    data: thumbDataBlob
+	});
+	transaction.addTag('artid', artid);
+	transaction.addTag('asset-type', 'thumbnail');
+	transaction.addTag('Content-Type', 'image/jpeg');
+
+	
+	console.log( "signing thumb tx" );
+	transaction = await arweave.transactions.sign(transaction);
+	
+	console.log("thumb: " + transaction);
+	
+	console.log( "about to upload thumb" );
+	let uploader = await arweave.transactions.getUploader(transaction);
+
+	while (!uploader.isComplete) {
+	  await uploader.uploadChunk();
+	  console.log(`${uploader.pctComplete}% complete, ${uploader.uploadedChunks}/${uploader.totalChunks}`);
+	}
+	console.log('thumbnail upload complete');
+	thumbTx = transaction.id;
+}
+
+</script>
+
+<script>
+async function encryptit(){
+
+	await getThumbnail();
+	await uploadMeta();
+
+	console.log('after getThumbnail: ' + thumbDataBlob);
+
+	var file = document.getElementById('artfile').files[0];
+	console.log('got file of length ' + file.size);
+	
+	var reader = new FileReader();
+     reader.onload = function(e){
+
+       // Use the CryptoJS library and the AES cypher to encrypt the 
+       // contents of the file, held in e.target.result, with the password
+       
+
+       encrypted = CryptoJS.AES.encrypt(e.target.result, aesKey);
+
+	   console.log('encrypted: ' + encrypted);
+	   upload();
+   };
+   reader.readAsDataURL(file);
+	
+	
+}
+</script>
+
+<script>
+/* Utility function to convert a canvas to a BLOB */
+var dataURLToBlob = function(dataURL) {
+    var BASE64_MARKER = ';base64,';
+    if (dataURL.indexOf(BASE64_MARKER) == -1) {
+        var parts = dataURL.split(',');
+        var contentType = parts[0].split(':')[1];
+        var raw = parts[1];
+
+        return new Blob([raw], {type: contentType});
+    }
+
+    var parts = dataURL.split(BASE64_MARKER);
+    var contentType = parts[0].split(':')[1];
+    var raw = window.atob(parts[1]);
+    var rawLength = raw.length;
+
+    var uInt8Array = new Uint8Array(rawLength);
+
+    for (var i = 0; i < rawLength; ++i) {
+        uInt8Array[i] = raw.charCodeAt(i);
+    }
+    thumbDataBlob = uInt8Array;
+
+    return new Blob([uInt8Array], {type: contentType});
+}
+/* End Utility function to convert a canvas to a BLOB      */
+</script>
+<script>
+async function getThumbnail(){
+	var file = document.getElementById('artfile').files[0];
+
+    // Ensure it's an image
+    if(file.type.match(/image.*/)) {
+        console.log('An image has been loaded');
+
+        // Load the image
+        var reader = new FileReader();
+        reader.onload = await function (readerEvent) {
+            var image = new Image();
+            image.onload = function (imageEvent) {
+
+                // Resize the image
+                var canvas = document.createElement('canvas'),
+                    max_size = 544,// TODO : pull max size from a site config
+                    width = image.width,
+                    height = image.height;
+                if (width > height) {
+                    if (width > max_size) {
+                        height *= max_size / width;
+                        width = max_size;
+                    }
+                } else {
+                    if (height > max_size) {
+                        width *= max_size / height;
+                        height = max_size;
+                    }
+                }
+                canvas.width = width;
+                canvas.height = height;
+                canvas.getContext('2d').drawImage(image, 0, 0, width, height);
+                var dataUrl = canvas.toDataURL('image/jpeg');
+                var resizedImage = dataURLToBlob(dataUrl);
+                //console.log('thumbnail:');
+                //console.log( resizedImage );
+                //thumbDataBlob = resizedImage;
+                //console.log( 'thumb dataUrl: ' + dataUrl );
+                uploadThumb();
+                $.event.trigger({
+                    type: "imageResized",
+                    blob: resizedImage,
+                    url: dataUrl
+                });
+            }
+            image.src = readerEvent.target.result;
+        }
+        reader.readAsDataURL(file);
+     }
+}
+</script>
+
+
+</body>
+</html>

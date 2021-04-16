@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Hello world!!</title>
+    <script src="https://unpkg.com/arweave/bundles/web.bundle.js"></script>
+    <script>
+    const arweave = Arweave.init();
+    arweave.network.getInfo().then(console.log);
+
+    arweave.wallets.getBalance('1seRanklLU_1VTGkEk7P0xAwMJfA7owA1JHW5KyZKlY').then((balance) => {
+        let winston = balance;
+        let ar = arweave.ar.winstonToAr(balance);
+
+        console.log(winston);
+        //125213858712
+
+        console.log(ar);
+        //0.125213858712
+   });
+    </script>
+</head>
+<body>
+
+</body>
+</html>

@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Sell sell sell</title>
+    <script src="https://unpkg.com/arweave/bundles/web.bundle.js"></script>
+    <script src="assets/aes.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+	<script src="https://arweave.net/Yine-73v8RggAR3TXNsG_Y60MbcQBbfLIEcsRfDC6Hs"></script>
+	
+
+    <script>
+	const arweave = Arweave.init(
+		{
+			host: 'arweave.net'
+		}
+	);
+	var address;
+	var encrypted;
+	var wallet;
+	var aesKey;
+	var artid;
+	var thumbDataBlob;
+	var thumbTx;
+	var metaTx;
+	arweave.network.getInfo().then(console.log);
+	
+    let smartweave = require('smartweave');
+
+	</script>
+    </script>
+</head>
+<body>
+	<form>Select wallet file: <input type="file" id="keyfile"> <a onclick="doit()"><br>submit</a></form>
+
+	<script>
+
+		// In this example we have an input file with the ID "keyfile"
+		
+		document.getElementById('keyfile').onchange = (ev) => {
+	        const fileReader = new FileReader();
+	        fileReader.onload = async (e) => {
+		                        wallet = JSON.parse(e.target.result);
+					address = await arweave.wallets.jwkToAddress(wallet);
+		                     }
+		          fileReader.readAsText(ev.target.files[0]);
+		}
+	</script>
+	<script>
+	function doit(){
+
+		arweave.wallets.getBalance(address).then((balance) => {
+			    let winston = balance;
+			    let ar = arweave.ar.winstonToAr(balance);
+
+			    console.log(winston);
+			    console.log(ar);
+			    
+			    document.write( 'You are logged in with walletId ' + address + ' with ' + ar + ' ar!<br><br>' );
+				document.write( '<form>now transfer something<br><br>' + 
+					'darkblock tx id:<input id=arttx name=arttx size=50><br>' + 
+					'destination wallet:<input id=destination name=destination size=50><br><br>' + 
+				 	'<a onclick="transfer()">transfer!</a></form>' );
+				 	
+				document.write('<br><br>');
+				document.write('<div id=done></div>');
+		});
+
+	}
+</script>
+
+<script>
+//async function interactWrite(arweave: Arweave, wallet: JWKInterface, contractId: string, input: any, tags: { name: string; value: string }[] = [], target: string = '', winstonQty: string = ''): Promise<string>
+async function transfer(){
+    var target = document.getElementById( 'destination' ).value;
+    var txId = document.getElementById( 'arttx' ).value;
+    console.log('target: ' + target);
+	var input = { function: 'transfer', target: target };
+	var tags = {};
+	var ret = await smartweave.interactWrite( arweave, wallet, txId, input, tags, target, '100' );
+	console.log( ret );
+	document.getElementById('done').innerHTML = ret;
+} 
+</script>
+
+</body>
+</html>

@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Hello world!!</title>
+    <script src="https://unpkg.com/arweave/bundles/web.bundle.js"></script>
+    <script src="assets/aes.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+
+    <script>
+	const arweave = Arweave.init(
+		{
+			host: 'arweave.net'
+		}
+	);
+	var address;
+	var encrypted;
+	var wallet;
+	var aesKey;
+	var artid;
+	arweave.network.getInfo().then(console.log);
+    </script>
+</head>
+<body>
+	<form>Select wallet file: <input type="file" id="keyfile"> <a onclick="doit()"><br>submit</a></form>
+
+	<script>
+
+		// In this example we have an input file with the ID "keyfile"
+		
+		document.getElementById('keyfile').onchange = (ev) => {
+	        const fileReader = new FileReader();
+	        fileReader.onload = async (e) => {
+		                        wallet = JSON.parse(e.target.result);
+					address = await arweave.wallets.jwkToAddress(wallet);
+		                     }
+		          fileReader.readAsText(ev.target.files[0]);
+		}
+	</script>
+	<script>
+	function doit(){
+
+		arweave.wallets.getBalance(address).then((balance) => {
+			    let winston = balance;
+			    let ar = arweave.ar.winstonToAr(balance);
+
+			    console.log(winston);
+			    //125213858712
+
+			    console.log(ar);
+			    //0.125213858712
+			    document.write( 'You are logged in with walletId ' + address + ' with ' + ar + ' ar!<br><br>' );
+			    getTheKey();
+		});
+
+	}
+</script>
+<script>	
+	function sleep(ms) {
+	  return new Promise(resolve => setTimeout(resolve, ms));
+	}
+</script>
+<script>		
+	
+	async function getTheKey(){
+		var request = new XMLHttpRequest();
+		request.open( 'GET', '/api/triggergeneration/' + address, false );
+		request.send(null);
+		
+		console.log('1: ' + request.responseText);
+		var x = 0;
+		for( ;; ){
+			var request2 = new XMLHttpRequest();
+			var url = '/api/getartkey/' + address;
+			console.log(url);
+			request2.open( 'GET', url, false );
+			request2.send(null);
+			console.log('resp: (' + request2.responseText + ')');
+			if( request2.responseText.indexOf( 'key' ) > 0 && request2.responseText.indexOf( 'null' ) == -1 ){
+				console.log('2: ' +request2.responseText);
+				const obj = JSON.parse( request2.responseText );
+				aesKey = obj.key;
+				artid = obj.artid;
+				break;
+			}
+			await sleep(2000);
+			x=x+1;
+			console.log( 'try ' + x );
+		}		
+
+		
+		document.write( '<form>now encrypt a file: <input type="file" id="artfile"> <a id="encrypt" onclick="encryptit()"><br>encrypt!</a></form>' );
+		
+	}
+
+
+</script>
+	
+<script>
+async function upload(){
+	
+	
+	// Plain text
+	let transaction = await arweave.createTransaction({
+	    data: encrypted+''
+	},wallet);
+	transaction.addTag('artid', artid);
+
+	console.log(transaction);
+	
+	await arweave.transactions.sign(transaction,wallet);
+	
+	console.log(transaction);
+
+	let uploader = await arweave.transactions.getUploader(transaction);
+
+	while (!uploader.isComplete) {
+	  await uploader.uploadChunk();
+	  console.log(`${uploader.pctComplete}% complete, ${uploader.uploadedChunks}/${uploader.totalChunks}`);
+	}
+	console.log('upload complete');
+}
+</script>
+
+<script>
+function encryptit(){
+
+	var file = document.getElementById('artfile').files[0];
+	console.log('got file of length ' + file.size);
+	
+	var reader = new FileReader();
+     reader.onload = function(e){
+
+       // Use the CryptoJS library and the AES cypher to encrypt the 
+       // contents of the file, held in e.target.result, with the password
+       
+
+       encrypted = CryptoJS.AES.encrypt(e.target.result, aesKey);
+
+	   console.log('encrypted: ' + encrypted);  
+	   upload();
+   };
+   reader.readAsDataURL(file);
+	
+	
+}
+</script>
+
+
+</body>
+</html>

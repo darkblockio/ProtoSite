@@ -1,0 +1,55 @@
+<html>
+<head>
+    <title>upload file!</title>
+    <script src="https://unpkg.com/arweave/bundles/web.bundle.js"></script>
+   
+</head>
+<body>
+
+<div onclick=test()>go for it</div>
+	
+    <script>
+	const arweave = Arweave.init(
+		{
+			host: 'arweave.net'
+		}
+	);
+
+	async function test(){
+		var perms = await window.arweaveWallet.getPermissions();
+		var newPerms = [];
+		if( !perms.includes('SIGN_TRANSACTION') ){
+			newPerms.push( 'SIGN_TRANSACTION' );
+		}
+		if( !perms.includes('ACCESS_ADDRESS') ){
+			newPerms.push( 'ACCESS_ADDRESS' );
+		}
+		if( newPerms.length > 0 ){
+			await window.arweaveWallet.connect(newPerms);
+		}
+		
+		document.write( 'uploading meta' );//if you comment me out it works fine...
+
+		let transaction = await arweave.createTransaction({
+		    data: "" + Math.random()
+		});
+	
+		console.log("signing meta tx");	
+		await arweave.transactions.sign(transaction);
+		console.log("after tx sign");
+		console.log("meta: " + transaction);
+	
+		await arweave.transactions.post(transaction);
+	}
+ </script>
+<script>
+
+async function uploadMeta(){
+
+}
+
+</script>
+
+
+</body>
+</html>

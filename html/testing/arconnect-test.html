@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>upload file!</title>
+    <script src="https://unpkg.com/arweave/bundles/web.bundle.js"></script>
+
+	
+	
+   
+</head>
+<body>
+
+<div onclick=test()>go for it</div>
+
+
+	
+    <script>
+	const arweave = Arweave.init(
+		{
+			host: 'arweave.net'
+		}
+	);
+	   
+	var address;
+	var encrypted;
+	var wallet;
+	var aesKey;
+	var artid;
+	var thumbDataBlob;
+	var thumbTx;
+	var metaTx;
+	var smartTx;
+    
+    
+
+
+	arweave.network.getInfo().then(console.log);
+	
+	async function test(){
+		try{
+			address = await window.arweaveWallet.getActiveAddress();
+		}
+		catch(err){
+			//can get perms instead
+			await window.arweaveWallet.connect([ 'ACCESS_ADDRESS', 'SIGN_TRANSACTION' ]);//this throws an error if we are already logged in :(
+			address = await window.arweaveWallet.getActiveAddress();
+		}
+		window.alert("you are logged in with address: " + address);
+		encryptit();
+	    //window.alert( "loaded wallet: " + address );
+	}
+	
+ </script>
+<script>
+
+async function encryptit(){
+
+	await uploadThumb();
+	await uploadMeta();
+}
+
+async function uploadMeta(){
+
+	console.log('uploading metadata');
+	let transaction = await arweave.createTransaction({
+	    data: "farts:" + Math.random()
+	});
+	transaction.addTag('artid', "sdfdsfdsf");
+	transaction.addTag('asset-type', 'metdata');
+	transaction.addTag('Content-Type', 'application/json');
+
+	console.log("signing meta tx");	
+	await arweave.transactions.sign(transaction);
+	
+	console.log("meta: " + transaction);
+
+	let uploader = await arweave.transactions.getUploader(transaction);
+
+	while (!uploader.isComplete) {
+	  await uploader.uploadChunk();
+	  console.log(`${uploader.pctComplete}% complete, ${uploader.uploadedChunks}/${uploader.totalChunks}`);
+	}
+	console.log('metadata upload complete');
+	metaTx = transaction.id;
+}
+
+
+async function uploadThumb(){
+	
+	//console.log('upload thumb: ' + thumbDataBlob);
+	let transaction = await arweave.createTransaction({
+	    data: "this isn't really a jpeg" + Math.random()
+	});
+	transaction.addTag('artid', "fgdgdf");
+	transaction.addTag('asset-type', 'thumbnail');
+	transaction.addTag('Content-Type', 'image/jpeg');
+
+	
+	console.log( "signing thumb tx" );
+	await arweave.transactions.sign(transaction);
+	
+	console.log("thumb: " + transaction);
+	
+	console.log( "about to upload thumb" );
+	let uploader = await arweave.transactions.getUploader(transaction);
+
+	while (!uploader.isComplete) {
+	  await uploader.uploadChunk();
+	  console.log(`${uploader.pctComplete}% complete, ${uploader.uploadedChunks}/${uploader.totalChunks}`);
+	}
+	console.log('thumbnail upload complete');
+	thumbTx = transaction.id;
+}
+</script>
+</body>
+</html>

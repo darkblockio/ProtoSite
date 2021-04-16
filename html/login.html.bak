@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head id=head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="./css/main.css" />
+	<link rel="stylesheet" href="https://use.typekit.net/yds2uea.css">
+    <title>darkblock</title>
+    <script src="https://unpkg.com/arweave/bundles/web.bundle.js"></script>
+	<script
+	src="https://code.jquery.com/jquery-3.6.0.min.js"
+	integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4="
+	crossorigin="anonymous"
+  ></script>
+    <!-- <script
+      src="https://code.jquery.com/jquery-3.6.0.min.js"
+      integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4="
+      crossorigin="anonymous"
+    ></script> -->
+    <script>
+      const arweave = Arweave.init({
+        host: "arweave.net",
+      });
+      var address;
+      arweave.network.getInfo().then(console.log);
+    </script>
+  </head>
+  
+  <body style="margin: 0px;" id=main>
+	<nav>
+		<div>
+		  <a href="index.html"
+			><img width="100%" src="./images/logo.svg" alt=""
+		  /></a>
+		</div>
+		<div class="nav-push">
+		  <a class="nav-link" href="index.html">Home</a>
+		  <a class="nav-link" href="/">Info</a>
+		  <a class="nav-link" href="/">Account</a>
+		  <a class="nav-link" href="/">Log Out</a>
+		</div>
+	  </nav>
+	  <main class="container wallet-link">
+
+		<h1 class="login-title">
+			Login to <br />
+			Darkblock
+		  </h1>
+    <form class="login-form">
+      Select wallet file: <input type="file" id="keyfile" />
+      <a class="submit-wallet" onclick="doit()">submit</a>
+    </form>
+</main>
+
+    <script>
+      // In this example we have an input file with the ID "keyfile"
+      let wallet;
+      document.getElementById("keyfile").onchange = (ev) => {
+        const fileReader = new FileReader();
+        fileReader.onload = async (e) => {
+          wallet = JSON.parse(e.target.result);
+          address = await arweave.wallets.jwkToAddress(wallet);
+        };
+        fileReader.readAsText(ev.target.files[0]);
+      };
+    </script>
+    <script>
+      function doit() {
+        arweave.wallets.getBalance(address).then((balance) => {
+          let winston = balance;
+          let ar = arweave.ar.winstonToAr(balance);
+
+          console.log(winston);
+          //125213858712
+
+          console.log(ar);
+          //0.125213858712
+	var html = '<div style=font-family:itc-avant-garde-gothic-pro,sans-serif;background-color:#020635;color:white;>'
+	html = html + '<div style=height:100vh;display:flex;justify-content:center;flex-direction:column;width:85vw;margin:auto; class="wallet-link">';
+	html = html + '<form class="login-form">';
+		html = html + "<h1 style=font-family:itc-avant-garde-gothic-pro,sans-serif; class=upload-subheader>Enter 6 Digit Code to Login to App </h1>";
+
+          
+
+          html = html + '<input style=margin-bottom:25px;margin-right:25px; size=10 id="code"><a style=background-color:white;cursor:pointer;color:#0248d8;padding:5px 25px;text-align:center;width:50px;display:flex;align-items:center;justify-content:center;border-radius:2px; class="submit"  onclick="pushCode(); ">submit</a>';
+          html = html + '</form></div></div>'; 
+		document.getElementById('head').innerHTML='';
+		document.getElementById('main').innerHTML=html;
+        });
+      }
+
+	  var head = document.getElementsByTagName("HEAD")[0];
+
+// Create new link Element
+var link = document.createElement("link");
+
+// set the attributes for link element
+link.rel = "stylesheet";
+
+link.type = "text/css";
+
+link.href = "./css/main.css";
+
+// Append link element to HTML head
+head.appendChild(link);
+
+// Append link element to HTML head
+head.appendChild(link);
+
+      function pushCode() {
+        console.log("hello");
+        // define the $ as jQuery for multiple uses
+        jQuery(function ($) {
+          // ...
+          let code = document.getElementById("code").value;
+          code = code.toUpperCase();
+          code = code.replace(/\W/g, "");
+          $.get(
+            "https://dev1.darkblock.io/api/codeset/" + code + "/" + address,
+            function () {
+              window.location.href = "portal.html";
+            }
+          );
+        });
+      }
+
+
+    </script>
+	
+	 
+
+    <script src="./js/scripts.js"></script>
+  </body>
+</html>

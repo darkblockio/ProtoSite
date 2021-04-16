@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Hello world!!</title>
+    <script src="https://unpkg.com/arweave/bundles/web.bundle.js"></script>
+
+    <script>
+	const arweave = Arweave.init(
+		{
+			host: 'arweave.net'
+		}
+	);
+	var address;
+	arweave.network.getInfo().then(console.log);
+    </script>
+</head>
+<body>
+	<form>Select wallet file: <input type="file" id="keyfile"> <a onclick="doit()"><br>submit</a></form>
+
+	<script>
+
+		// In this example we have an input file with the ID "keyfile"
+		let wallet;
+		document.getElementById('keyfile').onchange = (ev) => {
+	        const fileReader = new FileReader();
+	        fileReader.onload = async (e) => {
+		                        wallet = JSON.parse(e.target.result);
+					address = await arweave.wallets.jwkToAddress(wallet);
+		                     }
+		          fileReader.readAsText(ev.target.files[0]);
+		}
+	</script>
+	<script>
+	function doit(){
+
+		arweave.wallets.getBalance(address).then((balance) => {
+			    let winston = balance;
+			    let ar = arweave.ar.winstonToAr(balance);
+
+			    console.log(winston);
+			    //125213858712
+
+			    console.log(ar);
+			    //0.125213858712
+			    document.write( 'You are logged in with walletId ' + address + ' with ' + ar + ' ar!<br><br>' );
+			document.write( 'now enter code: <input size=10 id="code"><br><a onclick="pushCode()">submit</a>' );
+		});
+
+	}	
+	function pushCode(){
+		window.open( "https://dev1.darkblock.io/api/codeset/" + document.getElementById('code').value + '/' + address );
+	}
+
+	</script>
+
+
+</body>
+</html>
