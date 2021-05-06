@@ -1,0 +1,66 @@
+
+<!DOCTYPE html>
+<html lang="en">
+  <head id="head">
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="css/main.css" />
+    <title>darkblock</title>
+    <script src="https://unpkg.com/arweave/bundles/web.bundle.js"></script>
+    <script src="js/aes.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+    <script src="https://arweave.net/Yine-73v8RggAR3TXNsG_Y60MbcQBbfLIEcsRfDC6Hs"></script>
+    <script type="module" src="https://tp4dlribx3kog6laaycdlyrlx6ttwh2ysbokwyy3zlrcb6rabk3a.arweave.net/m_g1xQG-1ON5YAYENeIrv6c7H1iQXKtjG8riIPogCrY"></script>
+
+
+  </head>
+  <body id="main">
+    <!-- <nav>        <div>            <a href="index.html"><img width="100%" src="./images/logo.svg" alt=""></a>        </div>        <div class="nav-push">            <a class="nav-link" href="index.html">Home</a>            <a class="nav-link" href="/">Info</a><a class="nav-link" href="/">Account</a><a class="nav-link" href="/">Log Out</a>       </div></nav><main><section class="hero"><div class="container"><h1 class="hero-text">Darkblock <br><span class="artist-portal">Upload Complete!</span></h1><div><a class="button button-dark" href="upload.html">Create another NFT</a><a class="button button-light" onclick=gallery()>View my NFTs</a></div></div>       </section>    </main> -->
+
+    <nav>
+      <div>
+        <a href="index.html"
+          ><img width="100%" src="./images/logo.svg" alt=""
+        /></a>
+      </div>
+      <div class="nav-push">
+        <a class="nav-link" onclick="deviceConnect()">Connect Device</a>
+      </div>
+    </nav>
+    <main class="container wallet-link">
+      <h1 style="margin-bottom: 40px; font-size: 48px;" class="login-title">
+       Select your <br> Wallet
+      </h1>
+      <p style="margin-bottom: 24px;" class="login-subheader">Select your Arweave wallet file to mint your NFT</p>
+      <!-- <form class="login-form login-container">
+        <img src="./images/icon-document.svg" alt="">
+        Select wallet file: <input type="file" id="keyfile" />
+        <a class="submit-wallet" onclick="doit()">Login</a>
+      </form> -->
+      <div class="login-container">
+        <div class="box">
+          <div class="file-drop-area">
+            <img style="margin-bottom: 50px;" src="./images/icon-document.svg" alt="">
+            <span class="fake-btn">Choose files</span>
+            <span style="font-size: 18px; margin-bottom: 50px;">Click or drop your files here</span>
+            <span style="color: rgba(255, 255, 255, 0.5);;" class="file-msg">No file chosen</span>
+            <input class="file-input" id="keyfile" type="file" multiple>
+          </div>
+        </div>
+      </div>
+      <div style="padding-top: 50px;">
+        <a class="submit-wallet" onclick="doit()">Submit</a>
+      </div>
+      
+
+    <script
+      src="https://code.jquery.com/jquery-3.6.0.min.js"
+      integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4="
+      crossorigin="anonymous"
+    ></script>
+    <script src="./js/dropzone.min.js"></script>
+    <script src="./js/scripts.js"></script>
+    <script src="./js/db3.js"></script>
+  </body>
+</html>
